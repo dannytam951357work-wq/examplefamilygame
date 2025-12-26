@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>預防家暴：情境貼紙小遊戲</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --text:#f3f6ff;
+      --muted:#b8c0de;
+      --accent:#7aa2ff;
+      --good:#2de2a6;
+      --warn:#ffd166;
+      --bad:#ff5c7a;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(122,162,255,.25), transparent 50%),
+        radial-gradient(900px 600px at 80% 30%, rgba(45,226,166,.18), transparent 50%),
+        radial-gradient(900px 600px at 30% 90%, rgba(255,92,122,.15), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .app{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      gap:14px;
+    }
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding:16px 18px;
+      border-radius:var(--radius);
+      background:rgba(18,26,51,.75);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+    }
+    .titleWrap{ display:flex; flex-direction:column; gap:6px; }
+    .title{
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .sub{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .pillRow{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .pill{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--muted);
+      user-select:none;
+    }
+    .pill strong{ color:var(--text); }
+
+    main{
+      display:grid;
+      grid-template-rows: 1fr auto;
+      gap:14px;
+    }
+
+    .sceneCard{
+      background:rgba(18,26,51,.75);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      min-height: 360px;
+      isolation: isolate; /* make z-index layers reliable */
+    }
+
+    /* ✅ Fix #1: ensure top bar is ABOVE everything */
+    .sceneTopBar{
+      position:absolute;
+      inset: 0 0 auto 0;
+      padding:12px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      z-index: 50; /* was missing */
+      pointer-events:none;
+    }
+    .qBubble{
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      max-width: min(720px, 78%);
+      padding:10px 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.42);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(8px);
+    }
+    .qText{
+      font-weight:900;
+      font-size:16px;
+      line-height:1.2;
+      text-shadow: 0 2px 16px rgba(0,0,0,.5);
+    }
+    .hint{
+      font-size:12px;
+      color:rgba(243,246,255,.86);
+      line-height:1.25;
+    }
+    .miniHint{
+      pointer-events:none;
+      font-size:12px;
+      color:rgba(243,246,255,.80);
+      padding:10px 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      backdrop-filter: blur(8px);
+      height: fit-content;
+    }
+
+    #dropZone{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index: 10;
+    }
+
+    .sceneImg{
+      width:min(820px, 100%);
+      aspect-ratio: 16/9;
+      border-radius: 14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 70px rgba(0,0,0,.35);
+      position:relative;
+      background:rgba(0,0,0,.15);
+      touch-action: none;
+    }
+
+    /* ✅ Fix #2: feedback panel (non-fullscreen) */
+    .feedbackPanel{
+      position:absolute;
+      top: 76px; /* below the top bar */
+      right: 14px;
+      width: 320px;
+      max-width: calc(100% - 28px);
+      border-radius: 18px;
+      background: rgba(18,26,51,.92);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      backdrop-filter: blur(12px);
+      z-index: 60;
+      overflow:hidden;
+      display:none;
+    }
+    .feedbackPanel.show{ display:block; }
+    .fpHead{
+      padding:12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight:900;
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      white-space:nowrap;
+    }
+    .bDot{ width:10px; height:10px; border-radius:999px; }
+    .fpBody{
+      padding:12px 12px;
+      line-height:1.55;
+      font-size:13.5px;
+    }
+    .fpTitle{
+      font-weight:900;
+      font-size:14.5px;
+      margin-bottom:6px;
+    }
+    .fpTip{
+      margin-top:10px;
+      color: var(--muted);
+      font-size:12.5px;
+    }
+    .fpFoot{
+      padding:12px 12px;
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      border-top:1px solid rgba(255,255,255,.10);
+    }
+
+    /* placed sticker */
+    .placed{
+      position:absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      cursor:grab;
+      user-select:none;
+      touch-action:none;
+      transform: translate(-50%, -50%);
+      overflow:hidden;
+      background:rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+    }
+    .placed:active{ cursor:grabbing; }
+    .placed .miniLabel{
+      position:absolute;
+      inset:auto 8px 8px 8px;
+      padding:6px 8px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:800;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      text-shadow: 0 2px 12px rgba(0,0,0,.35);
+    }
+
+    .choices{
+      background:rgba(18,26,51,.75);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .choicesHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .choicesHeader .label{
+      font-size:14px;
+      color:var(--muted);
+    }
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    button{
+      appearance:none;
+      border:0;
+      cursor:pointer;
+      border-radius: 14px;
+      padding:10px 12px;
+      font-weight:800;
+      color:var(--text);
+      background: rgba(122,162,255,.18);
+      border:1px solid rgba(122,162,255,.35);
+    }
+    button:hover{ filter:brightness(1.08); }
+    button.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .stickerRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 740px){
+      .stickerRow{ grid-template-columns: 1fr; }
+      .sceneCard{ min-height: 460px; }
+      /* on mobile, feedback panel becomes bottom sheet-ish */
+      .feedbackPanel{
+        left: 14px;
+        right: 14px;
+        width: auto;
+        top: auto;
+        bottom: 14px;
+      }
+    }
+
+    .sticker{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+      cursor:grab;
+      touch-action:none;
+    }
+    .sticker:active{ cursor:grabbing; }
+    .thumb{
+      width:72px;
+      height:72px;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 22px rgba(0,0,0,.20);
+      flex:0 0 auto;
+      background: rgba(0,0,0,.10);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .sticker .meta{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .sticker .name{
+      font-weight:900;
+      font-size:14px;
+      line-height:1.1;
+    }
+    .sticker .desc{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.25;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:900;
+      padding:5px 8px;
+      border-radius:999px;
+      width:max-content;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      margin-top:3px;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(122,162,255,.15);
+    }
+
+    .endCard{
+      padding:18px;
+      display:none;
+      flex-direction:column;
+      gap:10px;
+    }
+    .endCard h2{ margin:0; font-size:18px; }
+    .endCard p{ margin:0; color:var(--muted); line-height:1.5; }
+    .hotline{
+      margin-top:6px;
+      padding:12px 12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:13px;
+    }
+    .hotline strong{ color:var(--text); }
+    .muted{ color:var(--muted); }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="titleWrap">
+        <div class="title">預防家暴：情境貼紙小遊戲</div>
+        <div class="sub">
+          把下方「家長回應」拖拉到上方情境圖中任何位置，就像貼紙一樣貼上去。<br/>
+          （貼上後仍可拖動調整位置；快速連按兩下可移除）
+        </div>
+      </div>
+      <div class="pillRow">
+        <div class="pill">題目：<strong id="qIndex">1</strong>/<strong id="qTotal">3</strong></div>
+        <div class="pill">操作：<strong>拖拉貼紙</strong></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="sceneCard">
+        <div class="sceneTopBar">
+          <div class="qBubble">
+            <div class="qText" id="questionText">家長可怎樣應付？</div>
+            <div class="hint">把你覺得最合適的「家長態度」拖到圖上（可放任何位置）</div>
+          </div>
+          <div class="miniHint">提示：拖拉貼紙 → 放手貼上</div>
+        </div>
+
+        <div id="dropZone">
+          <div class="sceneImg" id="sceneImg" aria-label="情境圖片（放置區）"></div>
+        </div>
+
+        <!-- ✅ Non-fullscreen feedback panel -->
+        <aside class="feedbackPanel" id="feedbackPanel" aria-live="polite">
+          <div class="fpHead">
+            <div class="badge">
+              <span class="bDot" id="bDot"></span>
+              <span id="badgeText">回饋</span>
+            </div>
+            <button class="secondary" id="btnClosePanel" type="button">收起</button>
+          </div>
+          <div class="fpBody">
+            <div class="fpTitle" id="feedbackTitle"></div>
+            <div id="feedbackBody"></div>
+            <div class="fpTip" id="feedbackTip"></div>
+          </div>
+          <div class="fpFoot">
+            <button class="secondary" id="btnKeep" type="button">先看看</button>
+            <button id="btnPanelNext" type="button">下一題</button>
+          </div>
+        </aside>
+      </section>
+
+      <section class="choices">
+        <div class="choicesHeader">
+          <div class="label">選一個家長回應（可拖拉）</div>
+          <div class="actions">
+            <button class="secondary" id="btnReset" type="button">清除貼紙</button>
+            <button id="btnNext" type="button">下一題</button>
+          </div>
+        </div>
+
+        <div class="stickerRow" id="stickerRow"></div>
+
+        <div class="endCard" id="endCard">
+          <h2>完成！</h2>
+          <p>謝謝你完成這個小遊戲。家暴不是家事，是需要被看見與被支援的議題。</p>
+          <div class="hotline">
+            <div><strong>需要幫助？</strong>如果你或你身邊的人正處於危險，請立即求助。</div>
+            <div class="muted">
+              ※ 請把以下內容改成你街站要展示的澳門/本地熱線與資源（這裡先放示例文字）。
+            </div>
+            <div>🔸 緊急情況：<strong>請致電當地緊急服務</strong></div>
+            <div>🔸 家暴支援/社會服務：<strong>（請填入本地熱線）</strong></div>
+            <div>🔸 社區中心：<strong>（請填入中心電話/地址）</strong></div>
+          </div>
+          <div class="actions" style="margin-top:10px;">
+            <button class="secondary" id="btnReplay" type="button">再玩一次</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function svgDataUri(svgText){
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText.trim());
+    }
+
+    const SCENES = [
+      {
+        id: "crying-child",
+        title: "家長可怎樣應付？",
+        subtitle: "孩子在哭泣，像是受了委屈或害怕。",
+        svg: svgDataUri(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#23315f"/>
+                <stop offset="1" stop-color="#111a33"/>
+              </linearGradient>
+              <linearGradient id="floor" x1="0" x2="1">
+                <stop offset="0" stop-color="#1a2244"/>
+                <stop offset="1" stop-color="#141c39"/>
+              </linearGradient>
+            </defs>
+            <rect width="1600" height="900" fill="url(#g1)"/>
+            <rect y="560" width="1600" height="340" fill="url(#floor)" opacity="0.95"/>
+            <circle cx="260" cy="210" r="120" fill="#7aa2ff" opacity="0.18"/>
+            <circle cx="1380" cy="240" r="150" fill="#2de2a6" opacity="0.12"/>
+            <rect x="1180" y="120" width="320" height="240" rx="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+            <path d="M1180 240 H1500" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+            <path d="M1340 120 V360" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+
+            <g transform="translate(520,170)">
+              <ellipse cx="280" cy="560" rx="300" ry="80" fill="rgba(0,0,0,0.35)"/>
+              <rect x="170" y="320" width="220" height="220" rx="60" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+              <circle cx="280" cy="260" r="120" fill="#ffd9c9"/>
+              <path d="M210 230 Q280 280 350 230" stroke="#1b2240" stroke-width="10" fill="none" opacity="0.5"/>
+              <circle cx="240" cy="250" r="14" fill="#1b2240"/>
+              <circle cx="320" cy="250" r="14" fill="#1b2240"/>
+              <path d="M230 290 C220 315 225 335 245 360" stroke="#7aa2ff" stroke-width="10" fill="none" opacity="0.9"/>
+              <path d="M330 290 C340 315 335 335 315 360" stroke="#7aa2ff" stroke-width="10" fill="none" opacity="0.9"/>
+              <path d="M245 310 Q280 350 315 310" stroke="#ff5c7a" stroke-width="10" fill="none" stroke-linecap="round"/>
+              <circle cx="190" cy="430" r="40" fill="#ffd9c9"/>
+              <circle cx="370" cy="430" r="40" fill="#ffd9c9"/>
+            </g>
+          </svg>
+        `)
+      },
+      {
+        id: "homework-argue",
+        title: "家長可怎樣回應？",
+        subtitle: "孩子不想做功課，開始鬧情緒。",
+        svg: svgDataUri(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+            <defs>
+              <linearGradient id="g2" x1="0" x2="1">
+                <stop offset="0" stop-color="#1a2a4e"/>
+                <stop offset="1" stop-color="#101a33"/>
+              </linearGradient>
+            </defs>
+            <rect width="1600" height="900" fill="url(#g2)"/>
+            <rect y="580" width="1600" height="320" fill="rgba(255,255,255,0.04)"/>
+            <rect x="330" y="520" width="940" height="80" rx="28" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+            <rect x="420" y="600" width="120" height="220" rx="26" fill="rgba(255,255,255,0.06)"/>
+            <rect x="1060" y="600" width="120" height="220" rx="26" fill="rgba(255,255,255,0.06)"/>
+            <g transform="translate(520,230)">
+              <circle cx="280" cy="200" r="110" fill="#ffd9c9"/>
+              <circle cx="240" cy="190" r="14" fill="#1b2240"/>
+              <circle cx="320" cy="190" r="14" fill="#1b2240"/>
+              <path d="M240 260 Q280 230 320 260" stroke="#ff5c7a" stroke-width="10" fill="none" stroke-linecap="round"/>
+              <rect x="165" y="320" width="230" height="230" rx="60" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+              <rect x="90" y="420" width="160" height="90" rx="18" fill="rgba(122,162,255,0.22)" stroke="rgba(122,162,255,0.35)" stroke-width="6"/>
+              <line x1="170" y1="420" x2="170" y2="510" stroke="rgba(255,255,255,0.20)" stroke-width="6"/>
+            </g>
+          </svg>
+        `)
+      },
+      {
+        id: "sibling-conflict",
+        title: "家長可怎樣處理？",
+        subtitle: "兩個孩子爭吵、推撞，氣氛升溫。",
+        svg: svgDataUri(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+            <defs>
+              <linearGradient id="g3" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#20305c"/>
+                <stop offset="1" stop-color="#0e1630"/>
+              </linearGradient>
+            </defs>
+            <rect width="1600" height="900" fill="url(#g3)"/>
+            <circle cx="260" cy="250" r="150" fill="#ff5c7a" opacity="0.10"/>
+            <circle cx="1400" cy="220" r="170" fill="#2de2a6" opacity="0.10"/>
+            <g transform="translate(380,210)">
+              <circle cx="280" cy="200" r="105" fill="#ffd9c9"/>
+              <circle cx="240" cy="190" r="14" fill="#1b2240"/>
+              <circle cx="320" cy="190" r="14" fill="#1b2240"/>
+              <path d="M240 250 Q280 280 320 250" stroke="#ff5c7a" stroke-width="10" fill="none" stroke-linecap="round"/>
+              <rect x="170" y="320" width="220" height="240" rx="60" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+            </g>
+            <g transform="translate(760,210)">
+              <circle cx="280" cy="200" r="105" fill="#ffd9c9"/>
+              <circle cx="240" cy="190" r="14" fill="#1b2240"/>
+              <circle cx="320" cy="190" r="14" fill="#1b2240"/>
+              <path d="M240 260 Q280 235 320 260" stroke="#ffd166" stroke-width="10" fill="none" stroke-linecap="round"/>
+              <rect x="170" y="320" width="220" height="240" rx="60" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
+            </g>
+            <path d="M800 470 l60 -90" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+            <path d="M820 480 l90 -30" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+            <path d="M780 480 l-90 -30" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+          </svg>
+        `)
+      }
+    ];
+
+    const STICKERS = {
+      calm: {
+        key: "calm",
+        name: "安慰溝通",
+        desc: "先安撫情緒，再了解發生了什麼。",
+        tag: "較合適",
+        dot: "#2de2a6",
+        svg: svgDataUri(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+            <defs><linearGradient id="bg" x1="0" x2="1">
+              <stop offset="0" stop-color="rgba(45,226,166,0.28)"/><stop offset="1" stop-color="rgba(122,162,255,0.22)"/>
+            </linearGradient></defs>
+            <rect width="200" height="200" rx="28" fill="url(#bg)"/>
+            <circle cx="85" cy="85" r="34" fill="#ffd9c9"/>
+            <circle cx="140" cy="90" r="34" fill="#ffd9c9"/>
+            <circle cx="75" cy="82" r="6" fill="#1b2240"/>
+            <circle cx="95" cy="82" r="6" fill="#1b2240"/>
+            <path d="M74 97 Q85 107 96 97" stroke="#ff5c7a" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <circle cx="130" cy="87" r="6" fill="#1b2240"/>
+            <circle cx="150" cy="87" r="6" fill="#1b2240"/>
+            <path d="M129 102 Q140 112 151 102" stroke="#ff5c7a" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M115 130 C95 160 75 160 55 140" stroke="rgba(255,255,255,0.55)" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <path d="M120 130 C140 160 160 160 180 140" stroke="rgba(255,255,255,0.55)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          </svg>
+        `)
+      },
+      anger: {
+        key: "anger",
+        name: "憤怒發火",
+        desc: "大聲責罵、威嚇，情緒失控。",
+        tag: "高風險",
+        dot: "#ff5c7a",
+        svg: svgDataUri(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+            <defs><linearGradient id="bg2" x1="0" x2="1">
+              <stop offset="0" stop-color="rgba(255,92,122,0.26)"/><stop offset="1" stop-color="rgba(255,209,102,0.16)"/>
+            </linearGradient></defs>
+            <rect width="200" height="200" rx="28" fill="url(#bg2)"/>
+            <circle cx="100" cy="92" r="55" fill="#ffd9c9"/>
+            <path d="M64 80 l28 -10" stroke="#1b2240" stroke-width="10" stroke-linecap="round"/>
+            <path d="M136 80 l-28 -10" stroke="#1b2240" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="80" cy="96" r="7" fill="#1b2240"/>
+            <circle cx="120" cy="96" r="7" fill="#1b2240"/>
+            <path d="M78 132 Q100 110 122 132" stroke="#ff5c7a" stroke-width="10" fill="none" stroke-linecap="round"/>
+            <path d="M36 40 l22 18" stroke="#ffd166" stroke-width="8"/>
+            <path d="M38 66 l24 -4" stroke="#ffd166" stroke-width="8"/>
+            <path d="M164 40 l-22 18" stroke="#ffd166" stroke-width="8"/>
+            <path d="M162 66 l-24 -4" stroke="#ffd166" stroke-width="8"/>
+          </svg>
+        `)
+      },
+      ignore: {
+        key: "ignore",
+        name: "冷漠忽視",
+        desc: "不回應、丟下一句「你自己想辦法」。",
+        tag: "可能傷害",
+        dot: "#ffd166",
+        svg: svgDataUri(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+            <defs><linearGradient id="bg3" x1="0" x2="1">
+              <stop offset="0" stop-color="rgba(255,209,102,0.22)"/><stop offset="1" stop-color="rgba(255,255,255,0.06)"/>
+            </linearGradient></defs>
+            <rect width="200" height="200" rx="28" fill="url(#bg3)"/>
+            <circle cx="92" cy="96" r="52" fill="#ffd9c9"/>
+            <circle cx="76" cy="92" r="7" fill="#1b2240"/>
+            <circle cx="108" cy="92" r="7" fill="#1b2240"/>
+            <path d="M70 125 H114" stroke="#1b2240" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+            <rect x="118" y="52" width="62" height="108" rx="18" fill="rgba(27,34,64,0.18)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+            <circle cx="149" cy="138" r="6" fill="rgba(255,255,255,0.35)"/>
+          </svg>
+        `)
+      }
+    };
+
+    const FEEDBACK = {
+      "crying-child": {
+        calm: { level:"good", title:"較合適：先安撫，後了解",
+          body:"當孩子在哭，先用溫和語氣安撫（例如：『我見到你很難受，我在這裡。』），再了解原因。這有助孩子降溫，也降低衝突升級的風險。",
+          tip:"可以用一句「我聽到你」＋一句「我們一起想辦法」來開始。" },
+        anger:{ level:"bad", title:"高風險：責罵/威嚇容易升級",
+          body:"大聲責罵、威嚇可能令孩子更害怕，甚至把衝突推向更嚴重的言語/肢體傷害。當你情緒升溫時，先停一停、深呼吸、先確保安全。",
+          tip:"若你已很生氣：先離開 10–30 秒、放低音量，再回來處理。" },
+        ignore:{ level:"warn", title:"可能傷害：忽視令孩子更孤單",
+          body:"冷漠忽視會令孩子覺得『我不重要/我不被理解』，長遠可能影響親子關係，亦可能令情緒累積後爆發。",
+          tip:"就算很忙，也可先說一句：『我看到你不開心，我會在 2 分鐘後陪你。』" }
+      },
+      "homework-argue": {
+        calm:{ level:"good", title:"較合適：先共情＋訂規矩",
+          body:"孩子抗拒做功課，可能因為壓力大或不懂。先承認感受（『我知道你覺得很難』），再一起拆細任務、訂短時間目標。",
+          tip:"用「10 分鐘小目標＋1 分鐘休息」通常比催促更有效。" },
+        anger:{ level:"bad", title:"高風險：用怒氣逼迫",
+          body:"用怒氣逼迫容易令孩子以恐懼服從，長遠可能造成更大抗拒或衝突升級。當你覺得忍不住，先把『安全與尊重』放在第一位。",
+          tip:"把句式由「你再唔做我就…」改成「我需要你…我們可以…」。" },
+        ignore:{ level:"warn", title:"可能傷害：放任未必是放鬆",
+          body:"完全不管可能令孩子更難建立規律，也可能令問題積累。可以保持平靜但有界線：『我會陪你開始第一題。』",
+          tip:"把「忽視」改成「短暫冷靜＋回來陪伴」會更好。" }
+      },
+      "sibling-conflict": {
+        calm:{ level:"good", title:"較合適：先分開＋教表達",
+          body:"先把兩個孩子分開（確保沒人受傷），再輪流讓他們說發生了什麼，教他們用語言表達需要，而不是用推撞解決。",
+          tip:"可以用：『停！先分開。每人一分鐘講。』" },
+        anger:{ level:"bad", title:"高風險：用更大暴力壓住衝突",
+          body:"家長若用恐嚇或更大聲壓制，孩子會學到「強者贏」。這會增加未來用暴力解決問題的機會。",
+          tip:"先把聲線放低，反而更有力量。" },
+        ignore:{ level:"warn", title:"可能傷害：不介入會讓衝突升級",
+          body:"孩子推撞若不介入，可能發展成受傷或更激烈衝突。家長可以介入但不偏袒：先止損，再處理公平規則。",
+          tip:"關鍵不是「誰對誰錯」，而是「怎樣安全地停下來」。" }
+      }
+    };
+
+    const state = { q: 0, placedCount: 0 };
+
+    const sceneImg = document.getElementById("sceneImg");
+    const questionText = document.getElementById("questionText");
+    const stickerRow = document.getElementById("stickerRow");
+    const qIndexEl = document.getElementById("qIndex");
+    const qTotalEl = document.getElementById("qTotal");
+    const btnNext = document.getElementById("btnNext");
+    const btnReset = document.getElementById("btnReset");
+    const endCard = document.getElementById("endCard");
+    const btnReplay = document.getElementById("btnReplay");
+
+    // panel
+    const feedbackPanel = document.getElementById("feedbackPanel");
+    const badgeText = document.getElementById("badgeText");
+    const bDot = document.getElementById("bDot");
+    const feedbackTitle = document.getElementById("feedbackTitle");
+    const feedbackBody = document.getElementById("feedbackBody");
+    const feedbackTip = document.getElementById("feedbackTip");
+    const btnClosePanel = document.getElementById("btnClosePanel");
+    const btnPanelNext = document.getElementById("btnPanelNext");
+    const btnKeep = document.getElementById("btnKeep");
+
+    qTotalEl.textContent = String(SCENES.length);
+
+    function clearPlaced(){
+      [...sceneImg.querySelectorAll(".placed")].forEach(el => el.remove());
+      state.placedCount = 0;
+      hidePanel();
+    }
+
+    function renderScene(){
+      const scene = SCENES[state.q];
+      qIndexEl.textContent = String(state.q + 1);
+      questionText.textContent = scene.title;
+
+      sceneImg.style.backgroundImage = `url('${scene.svg}')`;
+      sceneImg.style.backgroundSize = "cover";
+      sceneImg.style.backgroundPosition = "center";
+      sceneImg.style.backgroundRepeat = "no-repeat";
+
+      clearPlaced();
+      endCard.style.display = "none";
+      document.querySelector(".stickerRow").style.display = "";
+      btnNext.style.display = "";
+      btnReset.style.display = "";
+    }
+
+    function showEnd(){
+      clearPlaced();
+      endCard.style.display = "flex";
+      document.querySelector(".stickerRow").style.display = "none";
+      btnNext.style.display = "none";
+      btnReset.style.display = "none";
+    }
+
+    function badgeForLevel(level){
+      if(level === "good") return { text:"較合適", dot:"var(--good)" };
+      if(level === "warn") return { text:"可能有風險", dot:"var(--warn)" };
+      return { text:"高風險", dot:"var(--bad)" };
+    }
+
+    function showPanel(sceneId, stickerKey){
+      const pack = FEEDBACK[sceneId]?.[stickerKey];
+      if(!pack) return;
+
+      const b = badgeForLevel(pack.level);
+      badgeText.textContent = b.text;
+      bDot.style.background = b.dot;
+
+      feedbackTitle.textContent = pack.title;
+      feedbackBody.textContent = pack.body;
+      feedbackTip.textContent = "小提示：" + pack.tip;
+
+      feedbackPanel.classList.add("show");
+    }
+
+    function hidePanel(){
+      feedbackPanel.classList.remove("show");
+    }
+
+    btnClosePanel.addEventListener("click", hidePanel);
+    btnKeep.addEventListener("click", hidePanel);
+    btnPanelNext.addEventListener("click", ()=>{
+      hidePanel();
+      nextQuestion();
+    });
+
+    btnNext.addEventListener("click", ()=> nextQuestion());
+    btnReset.addEventListener("click", clearPlaced);
+
+    function nextQuestion(){
+      if(state.q < SCENES.length - 1){
+        state.q += 1;
+        renderScene();
+      }else{
+        showEnd();
+      }
+    }
+
+    btnReplay?.addEventListener("click", ()=>{
+      state.q = 0;
+      renderScene();
+    });
+
+    const stickerOrder = ["anger","ignore","calm"];
+    function renderStickers(){
+      stickerRow.innerHTML = "";
+      stickerOrder.forEach(key=>{
+        const s = STICKERS[key];
+        const el = document.createElement("div");
+        el.className = "sticker";
+        el.setAttribute("role","button");
+        el.setAttribute("aria-label", s.name);
+
+        el.innerHTML = `
+          <div class="thumb">
+            <img src="${s.svg}" alt="${s.name}" style="width:100%;height:100%;display:block;">
+          </div>
+          <div class="meta">
+            <div class="name">${s.name}</div>
+            <div class="desc">${s.desc}</div>
+            <div class="tag"><span class="dot" style="background:${s.dot}; box-shadow:0 0 0 4px rgba(255,255,255,0.06)"></span>${s.tag}</div>
+          </div>
+        `;
+
+        attachStickerDrag(el, key);
+        stickerRow.appendChild(el);
+      });
+    }
+
+    function attachStickerDrag(stickerEl, stickerKey){
+      let dragging = false;
+      let ghost = null;
+
+      const onDown = (e)=>{
+        e.preventDefault();
+        dragging = true;
+
+        ghost = document.createElement("div");
+        ghost.style.position = "fixed";
+        ghost.style.left = "-9999px";
+        ghost.style.top = "-9999px";
+        ghost.style.width = "120px";
+        ghost.style.height = "120px";
+        ghost.style.borderRadius = "16px";
+        ghost.style.zIndex = "9999";
+        ghost.style.pointerEvents = "none";
+        ghost.style.boxShadow = "0 18px 40px rgba(0,0,0,.45)";
+        ghost.style.border = "1px solid rgba(255,255,255,.14)";
+        ghost.style.overflow = "hidden";
+        ghost.innerHTML = `<img src="${STICKERS[stickerKey].svg}" style="width:100%;height:100%;display:block;" />`;
+        document.body.appendChild(ghost);
+
+        moveGhost(e);
+        window.addEventListener("pointermove", onMove, {passive:false});
+        window.addEventListener("pointerup", onUp, {passive:false});
+      };
+
+      const moveGhost = (e)=>{
+        if(!ghost) return;
+        ghost.style.left = (e.clientX - 60) + "px";
+        ghost.style.top  = (e.clientY - 60) + "px";
+        ghost.style.transform = "scale(1.02)";
+      };
+
+      const onMove = (e)=>{
+        e.preventDefault();
+        if(!dragging) return;
+        moveGhost(e);
+      };
+
+      const onUp = (e)=>{
+        e.preventDefault();
+        if(!dragging) return;
+        dragging = false;
+
+        const dropped = tryPlaceSticker(e, stickerKey);
+
+        if(ghost){ ghost.remove(); ghost = null; }
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+
+        if(dropped){
+          const sceneId = SCENES[state.q].id;
+          // ✅ show side panel, NOT fullscreen
+          showPanel(sceneId, stickerKey);
+        }
+      };
+
+      stickerEl.addEventListener("pointerdown", onDown, {passive:false});
+    }
+
+    function tryPlaceSticker(e, stickerKey){
+      const rect = sceneImg.getBoundingClientRect();
+      const x = e.clientX, y = e.clientY;
+
+      if(x < rect.left || x > rect.right || y < rect.top || y > rect.bottom){
+        return false;
+      }
+
+      const relX = ((x - rect.left) / rect.width) * 100;
+      const relY = ((y - rect.top) / rect.height) * 100;
+
+      const placed = document.createElement("div");
+      placed.className = "placed";
+      placed.style.left = relX + "%";
+      placed.style.top  = relY + "%";
+      placed.dataset.stickerKey = stickerKey;
+
+      placed.innerHTML = `
+        <img src="${STICKERS[stickerKey].svg}" alt="${STICKERS[stickerKey].name}" style="width:100%;height:100%;display:block;">
+        <div class="miniLabel">${STICKERS[stickerKey].name}</div>
+      `;
+
+      sceneImg.appendChild(placed);
+      makePlacedDraggable(placed);
+
+      state.placedCount += 1;
+      return true;
+    }
+
+    function makePlacedDraggable(el){
+      let dragging = false;
+
+      const onDown = (e)=>{
+        e.preventDefault();
+        dragging = true;
+        el.setPointerCapture?.(e.pointerId);
+        el.style.transform = "translate(-50%, -50%) scale(1.04)";
+        window.addEventListener("pointermove", onMove, {passive:false});
+        window.addEventListener("pointerup", onUp, {passive:false});
+      };
+
+      const onMove = (e)=>{
+        e.preventDefault();
+        if(!dragging) return;
+        const rect = sceneImg.getBoundingClientRect();
+        const x = Math.min(Math.max(e.clientX, rect.left), rect.right);
+        const y = Math.min(Math.max(e.clientY, rect.top), rect.bottom);
+
+        const relX = ((x - rect.left) / rect.width) * 100;
+        const relY = ((y - rect.top) / rect.height) * 100;
+
+        el.style.left = relX + "%";
+        el.style.top  = relY + "%";
+      };
+
+      const onUp = (e)=>{
+        e.preventDefault();
+        dragging = false;
+        el.style.transform = "translate(-50%, -50%) scale(1)";
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+
+      let lastTap = 0;
+      const onTap = ()=>{
+        const now = Date.now();
+        if(now - lastTap < 320){
+          el.remove();
+        }
+        lastTap = now;
+      };
+
+      el.addEventListener("pointerdown", onDown, {passive:false});
+      el.addEventListener("pointerup", onTap, {passive:true});
+      el.title = "拖動可調整位置；快速連按兩下可移除";
+    }
+
+    renderStickers();
+    renderScene();
+
+    window.addEventListener("keydown", (e)=>{
+      if(e.key.toLowerCase() === "n") nextQuestion();
+      if(e.key.toLowerCase() === "r") clearPlaced();
+      if(e.key === "Escape") hidePanel();
+    });
+  </script>
+</body>
+</html>
